@@ -11,8 +11,8 @@ pub struct CloseEvent<'info> {
     #[account(
         mut,
         close = creator,
-        seeds = [b"event", creator.key().as_ref(), &event.event_id.to_le_bytes()],
-        bump
+        seeds = [b"event", event.event_id.to_le_bytes().as_ref()],
+        bump = event.bump
     )]
     pub event: Account<'info, Event>,
 

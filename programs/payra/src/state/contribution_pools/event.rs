@@ -13,6 +13,9 @@ pub struct Event {
     #[max_len(10)]
     pub participants: Vec<Participant>,
     
+    #[max_len(10)]
+    pub whitelist: Vec<Pubkey>,
+    
     pub is_finalized: bool,
     pub deadline: i64,
     

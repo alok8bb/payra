@@ -22,7 +22,10 @@ pub struct CreateEvent<'info> {
         init,
         payer = creator,
         space = 8 + Event::INIT_SPACE,
-        seeds = [b"event", creator.key().as_ref(), &event_counter.count.to_le_bytes()],
+        seeds = [
+            b"event",
+            event_counter.count.to_le_bytes().as_ref()
+        ],
         bump
     )]
     pub event: Account<'info, Event>,
@@ -58,6 +61,7 @@ impl<'info> CreateEvent<'info> {
             total_contributed: 0,
             total_spent: 0,
             participants: Vec::new(),
+            whitelist: Vec::new(),
             is_finalized: false,
             deadline: args.deadline,
             name: args.name,
