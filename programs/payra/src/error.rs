@@ -14,6 +14,8 @@ pub enum PayraError {
     #[msg("contribution overflowed")]
     ContributionOverflow,
     
+    #[msg("unauthorised user")]
+    Unauthorised,
     
     #[msg("event deadline has not yet reached")]
     DeadlineNotReached,

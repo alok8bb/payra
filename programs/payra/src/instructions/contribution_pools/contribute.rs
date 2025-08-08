@@ -21,6 +21,7 @@ pub struct Contribute<'info> {
     pub contributor_ata: Account<'info, TokenAccount>,
 
     #[account(
+        mut,
         seeds = [b"event", event.event_id.to_le_bytes().as_ref()],
         bump = event.bump
     )]
@@ -40,11 +41,10 @@ pub struct Contribute<'info> {
 impl<'info> Contribute<'info> {
     pub fn contribute(&mut self, amount: u64) -> Result<()> {
         let clock = Clock::get()?;
-
         // Ensure the deadline has not passed
         require!(
             clock.unix_timestamp < self.event.deadline,
-            PayraError::DeadlineNotReached
+            PayraError::DeadlineAlreadyReached
         );
 
         // check whitelisted address

@@ -30,4 +30,12 @@ pub mod payra {
     pub fn close_event(ctx: Context<CloseEvent>) -> Result<()> {
         ctx.accounts.close_event()
     }
+    
+    pub fn contribute(ctx: Context<Contribute>, amount: u64) -> Result<()>{ 
+        ctx.accounts.contribute(amount)
+    }
+    
+    pub fn whitelist(ctx: Context<Whitelist>, wallets_to_add: Vec<Pubkey>) -> Result<()> { 
+        ctx.accounts.whitelist(wallets_to_add)
+    }
 }

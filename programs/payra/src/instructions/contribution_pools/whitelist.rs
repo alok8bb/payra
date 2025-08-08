@@ -10,7 +10,9 @@ use crate::{error::PayraError, Event, Participant};
 pub struct Whitelist<'info> {
     #[account(mut)]
     pub creator: Signer<'info>,
+
     #[account(
+        mut,
         seeds = [b"event", event.event_id.to_le_bytes().as_ref()],
         bump = event.bump
     )]
@@ -19,22 +21,25 @@ pub struct Whitelist<'info> {
 
 impl<'info> Whitelist<'info> {
     pub fn whitelist(&mut self, wallets_to_add: Vec<Pubkey>) -> Result<()> {
+        require_keys_eq!(
+            self.creator.key(),
+            self.event.creator,
+            PayraError::Unauthorised
+        );
+
         require!(
             self.event.whitelist.len() + wallets_to_add.len() <= 10,
             PayraError::WhitelistFull
         );
 
-        {
-            let mut batch = wallets_to_add.clone();
-            batch.sort();
-            batch.dedup();
-            require!(
-                batch.len() == wallets_to_add.len(),
-                PayraError::DuplicateWallet
-            );
-        }
+        let mut batch = wallets_to_add.clone();
+        batch.sort();
+        batch.dedup();
+        require!(
+            batch.len() == wallets_to_add.len(),
+            PayraError::DuplicateWallet
+        );
 
-        // add wallets
         for wallet in wallets_to_add {
             require!(
                 !self.event.whitelist.contains(&wallet),
