@@ -1,7 +1,8 @@
 #![allow(unexpected_cfgs)]
 use anchor_lang::prelude::*;
+use anchor_spl::{associated_token::AssociatedToken, token::{Mint, Token, TokenAccount}};
 
-use crate::{error::PayraError, Event, EventArgs, EventCounter};
+use crate::{error::PayraError, Event, EventArgs, EventCounter, Participant};
 
 #[derive(Accounts)]
 pub struct CreateEvent<'info> {
@@ -26,14 +27,25 @@ pub struct CreateEvent<'info> {
     )]
     pub event: Account<'info, Event>,
 
+    pub mint: Account<'info, Mint>,
+    #[account(
+           init,
+           payer = creator,
+           associated_token::mint = mint, 
+           associated_token::authority = event,
+    )]
+    pub event_vault: Account<'info, TokenAccount>,
+
+    pub associated_token_program: Program<'info, AssociatedToken>,
+    pub token_program: Program<'info, Token>,
     pub system_program: Program<'info, System>,
 }
 
 impl<'info> CreateEvent<'info> {
     pub fn create_event(&mut self, args: EventArgs, bumps: &CreateEventBumps) -> Result<u64> {
-        // name length check 
+        // name length check
         require!(args.name.len() <= 32, PayraError::NameTooLong);
-        
+
         // deadline validity check
         let now = Clock::get()?.unix_timestamp;
         require!(args.deadline > now, PayraError::InvalidDeadline);
@@ -45,17 +57,18 @@ impl<'info> CreateEvent<'info> {
             target_amount: args.target_amount,
             total_contributed: 0,
             total_spent: 0,
-            contributors: Vec::new(),
-            is_cancelled: false,
+            participants: Vec::new(),
             is_finalized: false,
             deadline: args.deadline,
             name: args.name,
             bump: bumps.event,
         });
-        
+
         let event_id = self.event_counter.count;
         // increase the event_id counter
-        self.event_counter.count = event_id.checked_add(1).ok_or(PayraError::EventCounterOverflow)?;
+        self.event_counter.count = event_id
+            .checked_add(1)
+            .ok_or(PayraError::EventCounterOverflow)?;
 
         msg!("Event created: {}", event_id);
         Ok(event_id)

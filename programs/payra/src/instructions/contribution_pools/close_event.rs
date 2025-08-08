@@ -34,6 +34,8 @@ impl<'info> CloseEvent<'info> {
             self.event.total_contributed < self.event.target_amount,
             PayraError::TargetMetAlready
         );
+        
+        // TODO: refund the amounts to users
 
         Ok(())
     }

@@ -1,12 +1,13 @@
 use anchor_lang::prelude::*;
 
-use crate::EventCounter;
+use crate::{EventCounter};
 
 #[derive(Accounts)]
 pub struct Initialize<'info> {
     #[account(mut)]
     pub admin: Signer<'info>,
 
+    // event counter for contribution pools
     #[account(
         init,
         seeds = [b"event_counter"],
@@ -21,9 +22,11 @@ pub struct Initialize<'info> {
 
 impl<'info> Initialize<'info> {
     pub fn handler(&mut self, bumps: &InitializeBumps) -> Result<()> {
-        let event_counter = &mut self.event_counter;
-        event_counter.count = 0;
-        event_counter.bump = bumps.event_counter;
+        // initialize event counter
+        self.event_counter.set_inner(EventCounter {
+            count: 0,
+            bump: bumps.event_counter,
+        });
         Ok(())
     }
 }

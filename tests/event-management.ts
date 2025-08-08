@@ -3,6 +3,11 @@ import { Program } from "@coral-xyz/anchor";
 import { Payra } from "../target/types/payra";
 import { LAMPORTS_PER_SOL, PublicKey } from "@solana/web3.js";
 import { assert, expect } from "chai";
+import {
+  createMint,
+  getOrCreateAssociatedTokenAccount,
+  mintTo,
+} from "@solana/spl-token";
 
 describe("event management", () => {
   const provider = anchor.AnchorProvider.env();
@@ -10,11 +15,11 @@ describe("event management", () => {
   async function airdropBalance(wallet: PublicKey) {
     await provider.connection.requestAirdrop(wallet, 2 * LAMPORTS_PER_SOL);
   }
-  
+
   function sleep(ms: number) {
-    return new Promise(resolve => setTimeout(resolve, ms));
+    return new Promise((resolve) => setTimeout(resolve, ms));
   }
-  
+
   anchor.setProvider(provider);
   const program = anchor.workspace.payra as Program<Payra>;
 
@@ -22,9 +27,35 @@ describe("event management", () => {
   // 1. Protocol Creator => Default Signer
   // 2. User => Community Pool user
   const userKp = anchor.web3.Keypair.generate();
-
+  let usdcMint;
+  let userUsdcATA;
   before(async () => {
     await airdropBalance(userKp.publicKey);
+
+    // mint
+    usdcMint = await createMint(
+      provider.connection,
+      provider.wallet.payer, // fee payer
+      provider.wallet.payer.publicKey, // mint authority
+      null, // freeze authority (none)
+      6, // decimals
+    );
+
+    userUsdcATA = await getOrCreateAssociatedTokenAccount(
+      provider.connection,
+      provider.wallet.payer, // fee payer
+      usdcMint, // mint
+      userKp.publicKey, // owner
+    );
+
+    await mintTo(
+      provider.connection,
+      provider.wallet.payer, // fee payer
+      usdcMint, // mint
+      userUsdcATA.address, // ATA address
+      provider.wallet.payer.publicKey, // mint authority
+      1000 * 10 ** 6, // amount in base units
+    );
   });
 
   // PDAs
@@ -65,6 +96,7 @@ describe("event management", () => {
         .signers([userKp])
         .accounts({
           creator: userKp.publicKey,
+          mint: usdcMint
         })
         .rpc();
     } catch (e) {
@@ -93,9 +125,9 @@ describe("event management", () => {
   });
 
   it("closes after deadline reached but target not reached", async () => {
-    // wait for deadline to finish 
-    await sleep(1200);
-    
+    // wait for deadline to finish
+    await sleep(1400);
+
     // close account
     await program.methods
       .closeEvent()
@@ -107,6 +139,6 @@ describe("event management", () => {
       .signers([userKp])
       .rpc();
   });
-  
-  // TODO: define to check close fail if target reached 
+
+  // TODO: define to check close fail if target reached
 });
