@@ -62,6 +62,7 @@ impl<'info> CreateEvent<'info> {
             total_spent: 0,
             participants: Vec::new(),
             whitelist: Vec::new(),
+            is_cancelled: false,
             is_finalized: false,
             deadline: args.deadline,
             name: args.name,

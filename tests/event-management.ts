@@ -112,7 +112,7 @@ describe("event management", () => {
   it("creates two events", async () => {
     const now = Math.floor(Date.now() / 1000);
     const deadline = new anchor.BN(now + 1); // 1 seconds ahead of now for testing purposes
-    const deadline2 = new anchor.BN(now + 60 * 2);
+    const deadline2 = new anchor.BN(now + 4);
 
     const event1Args = {
       name: "Group Trip",
@@ -157,6 +157,7 @@ describe("event management", () => {
           creator: poolCreator.publicKey,
           event: event1PDA,
           systemProgram: anchor.web3.SystemProgram.programId,
+          mint: usdcMint,
         })
         .signers([poolCreator])
         .rpc();
@@ -177,12 +178,12 @@ describe("event management", () => {
         creator: poolCreator.publicKey,
         event: event1PDA,
         systemProgram: anchor.web3.SystemProgram.programId,
+        mint: usdcMint
       })
       .signers([poolCreator])
       .rpc();
   });
 
-  // TODO: define to check close fail if target reached
   it("whitelist user wallet", async () => {
     await program.methods
       .whitelist([poolUser.publicKey])
@@ -251,5 +252,27 @@ describe("event management", () => {
       poolUser.publicKey.toBase58(),
       eventAccountAfter.participants[0].wallet.toBase58(),
     );
+  });
+
+  it("fails to close after deadline reached but target achieved", async () => {
+    // wait for deadline to finish
+    await sleep(3000);
+
+    // close account
+    try {
+      await program.methods
+        .closeEvent()
+        .accountsStrict({
+          creator: poolCreator.publicKey,
+          event: event2PDA,
+          systemProgram: anchor.web3.SystemProgram.programId,
+          mint: usdcMint
+        })
+        .signers([poolCreator])
+        .rpc();
+    } catch (err) {
+      const anchorError = err.error || err;
+      assert.equal(anchorError.errorCode.code, "TargetMetAlready");
+    }
   });
 });

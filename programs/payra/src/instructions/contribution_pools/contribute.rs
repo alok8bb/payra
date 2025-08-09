@@ -52,6 +52,8 @@ impl<'info> Contribute<'info> {
             self.event.whitelist.contains(&self.contributor.key()),
             PayraError::NotWhitelisted
         );
+        
+        require!(!self.event.is_cancelled, PayraError::EventCancelled);
 
         // transfer tokens from contributor -> event vault
         let cpi_accounts = TransferChecked {

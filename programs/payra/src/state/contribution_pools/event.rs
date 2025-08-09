@@ -16,6 +16,7 @@ pub struct Event {
     #[max_len(10)]
     pub whitelist: Vec<Pubkey>,
     
+    pub is_cancelled: bool,
     pub is_finalized: bool,
     pub deadline: i64,
     

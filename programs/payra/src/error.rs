@@ -20,6 +20,9 @@ pub enum PayraError {
     #[msg("event deadline has not yet reached")]
     DeadlineNotReached,
     
+    #[msg("event has been cancelled")]
+    EventCancelled,
+    
     #[msg("target met already")]
     TargetMetAlready,
     

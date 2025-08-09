@@ -1,5 +1,6 @@
 #![allow(unexpected_cfgs)]
 use anchor_lang::prelude::*;
+use anchor_spl::token::{Mint, TokenAccount, TransferChecked};
 
 use crate::{error::PayraError, Event, EventArgs, EventCounter};
 
@@ -10,11 +11,12 @@ pub struct CloseEvent<'info> {
 
     #[account(
         mut,
-        close = creator,
         seeds = [b"event", event.event_id.to_le_bytes().as_ref()],
         bump = event.bump
     )]
     pub event: Account<'info, Event>,
+
+    pub mint: Account<'info, Mint>,
 
     pub system_program: Program<'info, System>,
 }
@@ -34,8 +36,8 @@ impl<'info> CloseEvent<'info> {
             self.event.total_contributed < self.event.target_amount,
             PayraError::TargetMetAlready
         );
-        
-        // TODO: refund the amounts to users
+
+        self.event.is_cancelled = true;
 
         Ok(())
     }
