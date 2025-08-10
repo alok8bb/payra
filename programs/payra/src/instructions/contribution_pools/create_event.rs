@@ -38,6 +38,11 @@ pub struct CreateEvent<'info> {
            associated_token::authority = event,
     )]
     pub event_vault: Account<'info, TokenAccount>,
+    
+    #[account(
+        constraint = withdraw_token_account.mint == mint.key()
+    )]
+    pub withdraw_token_account: Account<'info, TokenAccount>,
 
     pub associated_token_program: Program<'info, AssociatedToken>,
     pub token_program: Program<'info, Token>,
@@ -57,6 +62,7 @@ impl<'info> CreateEvent<'info> {
         self.event.set_inner(Event {
             event_id: self.event_counter.count,
             creator: self.creator.key(),
+            withdraw_token_account: self.withdraw_token_account.key(),
             target_amount: args.target_amount,
             total_contributed: 0,
             total_spent: 0,

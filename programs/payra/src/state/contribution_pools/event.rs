@@ -5,17 +5,18 @@ use anchor_lang::prelude::*;
 pub struct Event {
     pub event_id: u64,
     pub creator: Pubkey,
+    pub withdraw_token_account: Pubkey,
     pub target_amount: u64,
     pub total_contributed: u64,
     pub total_spent: u64,
 
     #[max_len(10)]
     pub whitelist: Vec<Pubkey>,
-    
+
     pub is_cancelled: bool,
     pub is_finalized: bool,
     pub deadline: i64,
-    
+
     #[max_len(32)]
     pub name: String,
 

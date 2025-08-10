@@ -139,6 +139,7 @@ describe("event management", () => {
       .accounts({
         creator: poolCreator.publicKey,
         mint: usdcMint,
+        withdrawTokenAccount: poolCreatorUsdcATA.address,
       })
       .rpc();
 
@@ -148,6 +149,7 @@ describe("event management", () => {
       .accounts({
         creator: poolCreator.publicKey,
         mint: usdcMint,
+        withdrawTokenAccount: poolCreatorUsdcATA.address,
       })
       .rpc();
 

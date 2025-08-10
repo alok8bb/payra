@@ -97,9 +97,7 @@ impl<'info> Contribute<'info> {
                 .checked_add(amount)
                 .ok_or(PayraError::ContributionOverflow)?;
         }
-
-        msg!("Key: {}", self.participant.wallet);
-        msg!("Key: {}", self.contributor.key());
+        
         // update total contributed
         self.event.total_contributed = self
             .event
