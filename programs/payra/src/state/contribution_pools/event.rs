@@ -9,10 +9,6 @@ pub struct Event {
     pub total_contributed: u64,
     pub total_spent: u64,
 
-    // allow maximum 10 participants
-    #[max_len(10)]
-    pub participants: Vec<Participant>,
-    
     #[max_len(10)]
     pub whitelist: Vec<Pubkey>,
     
@@ -24,13 +20,6 @@ pub struct Event {
     pub name: String,
 
     pub bump: u8,
-}
-
-#[derive(AnchorSerialize, AnchorDeserialize, Clone, InitSpace)]
-pub struct Participant {
-    pub wallet: Pubkey,
-    pub contributed: u64,
-    pub spent: u64,
 }
 
 #[derive(AnchorDeserialize, AnchorSerialize)]

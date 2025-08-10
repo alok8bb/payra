@@ -101,6 +101,15 @@ describe("event management", () => {
     program.programId,
   );
 
+  const [userParticipantPDA] = anchor.web3.PublicKey.findProgramAddressSync(
+    [
+      Buffer.from("participant"),
+      new anchor.BN(1).toArrayLike(Buffer, "le", 8),
+      poolUser.publicKey.toBuffer(),
+    ],
+    program.programId,
+  );
+
   it("initialize protocol", async () => {
     try {
       await program.methods.initialize().rpc();
@@ -178,7 +187,7 @@ describe("event management", () => {
         creator: poolCreator.publicKey,
         event: event1PDA,
         systemProgram: anchor.web3.SystemProgram.programId,
-        mint: usdcMint
+        mint: usdcMint,
       })
       .signers([poolCreator])
       .rpc();
@@ -230,6 +239,7 @@ describe("event management", () => {
         event: event2PDA,
         eventVault: event2Vault.address,
         mint: usdcMint,
+        participant: userParticipantPDA,
         associatedTokenProgram,
         systemProgram,
         tokenProgram,
@@ -244,14 +254,17 @@ describe("event management", () => {
     const vaultBalanceAfter = await provider.connection.getTokenAccountBalance(
       event2Vault.address,
     );
+    const participantAccount =
+      await program.account.participant.fetch(userParticipantPDA);
 
     assert.equal(eventAccountAfter.totalContributed.toNumber(), 100 * 10 ** 6);
     assert.equal(balanceAfter.value.uiAmount, 900);
     assert.equal(vaultBalanceAfter.value.uiAmount, 100);
     assert.equal(
       poolUser.publicKey.toBase58(),
-      eventAccountAfter.participants[0].wallet.toBase58(),
+      participantAccount.wallet.toBase58(),
     );
+    assert.equal(participantAccount.contributed.toNumber(), 100 * 10 ** 6);
   });
 
   it("fails to close after deadline reached but target achieved", async () => {
@@ -266,7 +279,7 @@ describe("event management", () => {
           creator: poolCreator.publicKey,
           event: event2PDA,
           systemProgram: anchor.web3.SystemProgram.programId,
-          mint: usdcMint
+          mint: usdcMint,
         })
         .signers([poolCreator])
         .rpc();

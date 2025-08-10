@@ -32,7 +32,7 @@ pub mod payra {
     }
     
     pub fn contribute(ctx: Context<Contribute>, amount: u64) -> Result<()>{ 
-        ctx.accounts.contribute(amount)
+        ctx.accounts.contribute(amount, &ctx.bumps)
     }
     
     pub fn whitelist(ctx: Context<Whitelist>, wallets_to_add: Vec<Pubkey>) -> Result<()> { 

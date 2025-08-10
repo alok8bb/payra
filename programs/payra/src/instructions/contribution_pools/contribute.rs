@@ -33,13 +33,23 @@ pub struct Contribute<'info> {
         associated_token::authority = event
     )]
     pub event_vault: Account<'info, TokenAccount>,
+
+    #[account(
+        init_if_needed,
+        payer = contributor,
+        seeds = [b"participant", event.event_id.to_le_bytes().as_ref(), contributor.key().as_ref()],
+        space = 8 + Participant::INIT_SPACE,
+        bump
+    )]
+    pub participant: Account<'info, Participant>,
+
     pub associated_token_program: Program<'info, AssociatedToken>,
     pub token_program: Program<'info, Token>,
     pub system_program: Program<'info, System>,
 }
 
 impl<'info> Contribute<'info> {
-    pub fn contribute(&mut self, amount: u64) -> Result<()> {
+    pub fn contribute(&mut self, amount: u64, bumps: &ContributeBumps) -> Result<()> {
         let clock = Clock::get()?;
         // Ensure the deadline has not passed
         require!(
@@ -52,7 +62,8 @@ impl<'info> Contribute<'info> {
             self.event.whitelist.contains(&self.contributor.key()),
             PayraError::NotWhitelisted
         );
-        
+
+        // check whether event is not cancelled 
         require!(!self.event.is_cancelled, PayraError::EventCancelled);
 
         // transfer tokens from contributor -> event vault
@@ -66,26 +77,29 @@ impl<'info> Contribute<'info> {
         let cpi_ctx = CpiContext::new(self.token_program.to_account_info(), cpi_accounts);
         transfer_checked(cpi_ctx, amount, self.mint.decimals)?;
 
-        // update the data in event
-        let contributor = self.contributor.key();
-        if let Some(existing) = self
-            .event
-            .participants
-            .iter_mut()
-            .find(|p| p.wallet == contributor)
-        {
-            existing.contributed = existing
+        // check whether the wallet is set to default pubkey => uninitialized 
+        if self.participant.wallet == Pubkey::default() {
+            // account freshly created; initialize
+            self.participant.set_inner(Participant {
+                event: self.event.key(),
+                event_id: self.event.event_id,
+                wallet: self.contributor.key(),
+                contributed: amount,
+                spent: 0,
+                refunded: false,
+                bump: bumps.participant,
+            });
+        } else {
+            // account exists, update contributed amount by adding
+            self.participant.contributed = self
+                .participant
                 .contributed
                 .checked_add(amount)
                 .ok_or(PayraError::ContributionOverflow)?;
-        } else {
-            self.event.participants.push(Participant {
-                wallet: contributor,
-                contributed: amount,
-                spent: 0,
-            });
         }
 
+        msg!("Key: {}", self.participant.wallet);
+        msg!("Key: {}", self.contributor.key());
         // update total contributed
         self.event.total_contributed = self
             .event

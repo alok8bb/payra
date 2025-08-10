@@ -60,7 +60,6 @@ impl<'info> CreateEvent<'info> {
             target_amount: args.target_amount,
             total_contributed: 0,
             total_spent: 0,
-            participants: Vec::new(),
             whitelist: Vec::new(),
             is_cancelled: false,
             is_finalized: false,
