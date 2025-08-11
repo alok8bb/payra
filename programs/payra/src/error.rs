@@ -26,6 +26,12 @@ pub enum PayraError {
     #[msg("target met already")]
     TargetMetAlready,
     
+    #[msg("invalid percentage, total should be 100")]
+    InvalidPercentage,
+    
+    #[msg("spendings should have atleast one participant")]
+    NoParticipants,
+    
     #[msg("whitelist is full")]
     WhitelistFull,
     #[msg("trying to add duplicate wallet to whitelist")]

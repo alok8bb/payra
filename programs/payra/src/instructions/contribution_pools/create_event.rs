@@ -65,6 +65,7 @@ impl<'info> CreateEvent<'info> {
             withdraw_token_account: self.withdraw_token_account.key(),
             target_amount: args.target_amount,
             total_contributed: 0,
+            proposal_count: 0,
             total_spent: 0,
             whitelist: Vec::new(),
             is_cancelled: false,

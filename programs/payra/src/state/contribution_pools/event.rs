@@ -16,6 +16,7 @@ pub struct Event {
     pub is_cancelled: bool,
     pub is_finalized: bool,
     pub deadline: i64,
+    pub proposal_count: u16,
 
     #[max_len(32)]
     pub name: String,
