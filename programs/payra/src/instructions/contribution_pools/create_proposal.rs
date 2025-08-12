@@ -12,18 +12,13 @@ pub struct CreateProposal<'info> {
     pub creator: Signer<'info>,
 
     #[account(
+        mut,
         seeds = [b"event", event.event_id.to_le_bytes().as_ref()],
         bump = event.bump
     )]
     pub event: Account<'info, Event>,
 
     pub mint: Account<'info, Mint>,
-
-    #[account(
-        associated_token::mint = mint,
-        associated_token::authority = event
-    )]
-    pub event_vault: Account<'info, TokenAccount>,
 
     #[account(
         init,
@@ -48,9 +43,10 @@ impl<'info> CreateProposal<'info> {
         deadline: i64,
         bumps: CreateProposalBumps,
     ) -> Result<()> {
-        // check whitelisted address
+        // Check whitelist or allow event creator
         require!(
-            self.event.whitelist.contains(&self.creator.key()),
+            self.event.whitelist.contains(&self.creator.key())
+                || self.event.creator == self.creator.key(),
             PayraError::NotWhitelisted
         );
 
@@ -77,6 +73,8 @@ impl<'info> CreateProposal<'info> {
             bump: bumps.proposal,
         });
 
+        self.event.proposal_count = self.event.proposal_count.checked_add(1).ok_or(PayraError::ProposalCounterOverflow)?;
+        
         Ok(())
     }
 }

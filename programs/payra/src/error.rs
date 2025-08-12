@@ -13,6 +13,8 @@ pub enum PayraError {
     EventCounterOverflow,
     #[msg("contribution overflowed")]
     ContributionOverflow,
+    #[msg("proposal counter overflowed")]
+    ProposalCounterOverflow,
     
     #[msg("unauthorised user")]
     Unauthorised,

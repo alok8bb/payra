@@ -26,16 +26,27 @@ pub mod payra {
     pub fn create_event(ctx: Context<CreateEvent>, args: EventArgs) -> Result<u64> {
         ctx.accounts.create_event(args, &ctx.bumps)
     }
-    
+
     pub fn close_event(ctx: Context<CloseEvent>) -> Result<()> {
         ctx.accounts.close_event()
     }
-    
-    pub fn contribute(ctx: Context<Contribute>, amount: u64) -> Result<()>{ 
+
+    pub fn contribute(ctx: Context<Contribute>, amount: u64) -> Result<()> {
         ctx.accounts.contribute(amount, &ctx.bumps)
     }
-    
-    pub fn whitelist(ctx: Context<Whitelist>, wallets_to_add: Vec<Pubkey>) -> Result<()> { 
+
+    pub fn whitelist(ctx: Context<Whitelist>, wallets_to_add: Vec<Pubkey>) -> Result<()> {
         ctx.accounts.whitelist(wallets_to_add)
+    }
+
+    pub fn create_proposal(
+        ctx: Context<CreateProposal>,
+        title: String,
+        amount: u64,
+        spendings: Vec<SpendingShare>,
+        deadline: i64,
+    ) -> Result<()> {
+        ctx.accounts
+            .create_proposal(title, amount, spendings, deadline, ctx.bumps)
     }
 }
