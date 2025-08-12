@@ -53,4 +53,10 @@ pub mod payra {
     pub fn vote(ctx: Context<Vote>, vote_choice: bool) -> Result<()> {
         ctx.accounts.vote(vote_choice)
     }
+
+    pub fn settle_proposal(
+        ctx: Context<SettleProposal>
+    ) -> Result<()> {
+        settle_proposal_handler(ctx)
+    }
 }

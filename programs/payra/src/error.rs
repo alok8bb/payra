@@ -24,6 +24,16 @@ pub enum PayraError {
     #[msg("User has already voted for this proposal")]
     AlreadyVoted,
     
+    #[msg("withdraw account doesn't match the event's withdarw account")]
+    InvalidWithdrawAccount,
+    
+    AlreadySettled,
+    TooEarlyToSettle,
+    InvalidParticipantEvent,
+    InvalidParticipantWallet,
+    InvalidParticipantAccounts,
+    MathOverflow,
+    
     #[msg("unauthorised user")]
     Unauthorised,
     

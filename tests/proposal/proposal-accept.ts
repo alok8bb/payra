@@ -327,9 +327,9 @@ describe("proposal flow", () => {
       .rpc();
 
     const proposal = await program.account.proposal.fetch(proposalPDA);
-    console.log(proposal.yesVotes[0].toBase58(), poolUser.publicKey);
+    assert.equal(proposal.yesVotes[0].toBase58(), poolUser.publicKey.toBase58());
   });
-  
+
   it("fails on voting again", async () => {
     const [proposalPDA] = anchor.web3.PublicKey.findProgramAddressSync(
       [
@@ -354,9 +354,74 @@ describe("proposal flow", () => {
         })
         .signers([poolUser])
         .rpc();
-    }catch(err) {
+    } catch (err) {
       const anchorError = err.error || err;
       assert.equal(anchorError.errorCode.code, "AlreadyVoted");
     }
-  })
+
+    await program.methods
+      .vote(true)
+      .accountsStrict({
+        event: eventPDA,
+        proposal: proposalPDA,
+        systemProgram,
+        tokenProgram,
+        associatedTokenProgram,
+        mint: usdcMint,
+        voter: poolUserB.publicKey,
+      })
+      .signers([poolUserB])
+      .rpc();
+  });
+
+  it("settle proposal", async () => {
+    const [proposalPDA] = anchor.web3.PublicKey.findProgramAddressSync(
+      [
+        Buffer.from("proposal"),
+        eventPDA.toBuffer(),
+        new anchor.BN(0).toArrayLike(Buffer, "le", 2),
+      ],
+      program.programId,
+    );
+    const eventVault = await getOrCreateAssociatedTokenAccount(
+      provider.connection,
+      provider.wallet.payer, // fee payer
+      usdcMint, // mint
+      eventPDA, // owner
+      true,
+    );
+    const participantPDAs = [userParticipantPDA, userBParticipantPDA];
+    await program.methods
+      .settleProposal()
+      .accountsStrict({
+        associatedTokenProgram,
+        event: eventPDA,
+        eventVault: eventVault.address,
+        mint: usdcMint,
+        proposal: proposalPDA,
+        signer: poolCreator.publicKey,
+        systemProgram,
+        tokenProgram,
+        withdrawAccount: poolCreatorUsdcATA.address,
+      })
+      .remainingAccounts(
+        participantPDAs.map((pda) => ({
+          pubkey: pda,
+          isWritable: true,
+          isSigner: false,
+        })),
+      )
+      .signers([poolCreator])
+      .rpc();
+
+    const vaultBalance = await provider.connection.getTokenAccountBalance(
+      eventVault.address,
+    );
+    assert.equal(vaultBalance.value.uiAmount, 300);
+    
+    const participant = await program.account.participant.fetch(userParticipantPDA);
+    assert.equal(participant.spent.toNumber(), 50 * 10 ** 6);
+    const participantB = await program.account.participant.fetch(userParticipantPDA);
+    assert.equal(participantB.spent.toNumber(), 50 * 10 ** 6);
+  });
 });
