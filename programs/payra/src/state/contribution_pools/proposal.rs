@@ -5,6 +5,7 @@ use crate::MAX_PARTICIPANTS;
 #[account]
 #[derive(InitSpace)]
 pub struct Proposal {
+    pub proposal_id: u16,
     #[max_len(32)]
     pub title: String,
 

@@ -16,6 +16,14 @@ pub enum PayraError {
     #[msg("proposal counter overflowed")]
     ProposalCounterOverflow,
     
+    #[msg("Proposal Expired")]
+    ProposalExpired,
+    
+    #[msg("User not authorised to vote for this proposal")]
+    NotAuthorizedToVote,
+    #[msg("User has already voted for this proposal")]
+    AlreadyVoted,
+    
     #[msg("unauthorised user")]
     Unauthorised,
     

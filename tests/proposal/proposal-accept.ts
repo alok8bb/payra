@@ -297,8 +297,66 @@ describe("proposal flow", () => {
         percentage: s.percentage,
       })),
     );
-    
+
     const eventAfter = await program.account.event.fetch(eventPDA);
     assert.equal(eventAfter.proposalCount, 1);
   });
+
+  it("votes yes to the proposal", async () => {
+    const [proposalPDA] = anchor.web3.PublicKey.findProgramAddressSync(
+      [
+        Buffer.from("proposal"),
+        eventPDA.toBuffer(),
+        new anchor.BN(0).toArrayLike(Buffer, "le", 2),
+      ],
+      program.programId,
+    );
+
+    await program.methods
+      .vote(true)
+      .accountsStrict({
+        event: eventPDA,
+        proposal: proposalPDA,
+        systemProgram,
+        tokenProgram,
+        associatedTokenProgram,
+        mint: usdcMint,
+        voter: poolUser.publicKey,
+      })
+      .signers([poolUser])
+      .rpc();
+
+    const proposal = await program.account.proposal.fetch(proposalPDA);
+    console.log(proposal.yesVotes[0].toBase58(), poolUser.publicKey);
+  });
+  
+  it("fails on voting again", async () => {
+    const [proposalPDA] = anchor.web3.PublicKey.findProgramAddressSync(
+      [
+        Buffer.from("proposal"),
+        eventPDA.toBuffer(),
+        new anchor.BN(0).toArrayLike(Buffer, "le", 2),
+      ],
+      program.programId,
+    );
+
+    try {
+      await program.methods
+        .vote(true)
+        .accountsStrict({
+          event: eventPDA,
+          proposal: proposalPDA,
+          systemProgram,
+          tokenProgram,
+          associatedTokenProgram,
+          mint: usdcMint,
+          voter: poolUser.publicKey,
+        })
+        .signers([poolUser])
+        .rpc();
+    }catch(err) {
+      const anchorError = err.error || err;
+      assert.equal(anchorError.errorCode.code, "AlreadyVoted");
+    }
+  })
 });

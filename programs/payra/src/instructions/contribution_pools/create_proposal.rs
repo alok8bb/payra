@@ -67,14 +67,19 @@ impl<'info> CreateProposal<'info> {
             yes_votes: Vec::new(),
             no_votes: Vec::new(),
             creator: self.creator.key(),
+            proposal_id: self.event.proposal_count,
             deadline,
             settled: false,
             cancelled: false,
             bump: bumps.proposal,
         });
 
-        self.event.proposal_count = self.event.proposal_count.checked_add(1).ok_or(PayraError::ProposalCounterOverflow)?;
-        
+        self.event.proposal_count = self
+            .event
+            .proposal_count
+            .checked_add(1)
+            .ok_or(PayraError::ProposalCounterOverflow)?;
+
         Ok(())
     }
 }

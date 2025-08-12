@@ -49,4 +49,8 @@ pub mod payra {
         ctx.accounts
             .create_proposal(title, amount, spendings, deadline, ctx.bumps)
     }
+
+    pub fn vote(ctx: Context<Vote>, vote_choice: bool) -> Result<()> {
+        ctx.accounts.vote(vote_choice)
+    }
 }
