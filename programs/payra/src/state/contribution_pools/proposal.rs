@@ -9,6 +9,8 @@ pub struct Proposal {
     #[max_len(32)]
     pub title: String,
 
+    pub proposal_type: ProposalType,
+
     pub amount: u64,
     #[max_len(MAX_PARTICIPANTS)]
     pub spendings: Vec<SpendingShare>,
@@ -21,7 +23,7 @@ pub struct Proposal {
     pub deadline: i64,
     pub settled: bool,
     pub cancelled: bool,
-    pub bump: u8
+    pub bump: u8,
 }
 
 // for <wallet> => 30% participation in the proposed expense
@@ -29,4 +31,10 @@ pub struct Proposal {
 pub struct SpendingShare {
     pub wallet: Pubkey,
     pub percentage: u8,
+}
+
+#[derive(AnchorSerialize, AnchorDeserialize, Clone, InitSpace)]
+pub enum ProposalType {
+    Spending,
+    EventSettlement,
 }

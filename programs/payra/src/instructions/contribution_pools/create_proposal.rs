@@ -4,7 +4,7 @@ use anchor_spl::{
     token::{Mint, Token, TokenAccount},
 };
 
-use crate::{error::PayraError, Event, Proposal, SpendingShare};
+use crate::{error::PayraError, Event, Proposal, ProposalType, SpendingShare};
 
 #[derive(Accounts)]
 pub struct CreateProposal<'info> {
@@ -64,6 +64,7 @@ impl<'info> CreateProposal<'info> {
             title: title,
             amount,
             spendings,
+            proposal_type: ProposalType::Spending,
             yes_votes: Vec::new(),
             no_votes: Vec::new(),
             creator: self.creator.key(),

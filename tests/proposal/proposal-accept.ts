@@ -327,7 +327,10 @@ describe("proposal flow", () => {
       .rpc();
 
     const proposal = await program.account.proposal.fetch(proposalPDA);
-    assert.equal(proposal.yesVotes[0].toBase58(), poolUser.publicKey.toBase58());
+    assert.equal(
+      proposal.yesVotes[0].toBase58(),
+      poolUser.publicKey.toBase58(),
+    );
   });
 
   it("fails on voting again", async () => {
@@ -418,10 +421,145 @@ describe("proposal flow", () => {
       eventVault.address,
     );
     assert.equal(vaultBalance.value.uiAmount, 300);
-    
-    const participant = await program.account.participant.fetch(userParticipantPDA);
+
+    const participant =
+      await program.account.participant.fetch(userParticipantPDA);
     assert.equal(participant.spent.toNumber(), 50 * 10 ** 6);
-    const participantB = await program.account.participant.fetch(userParticipantPDA);
+    const participantB =
+      await program.account.participant.fetch(userParticipantPDA);
     assert.equal(participantB.spent.toNumber(), 50 * 10 ** 6);
+  });
+
+  it("create second proposal with mixed votes and settle", async () => {
+    const event = await program.account.event.fetch(eventPDA);
+
+    const [proposalPDA2] = anchor.web3.PublicKey.findProgramAddressSync(
+      [
+        Buffer.from("proposal"),
+        eventPDA.toBuffer(),
+        new anchor.BN(event.proposalCount).toArrayLike(Buffer, "le", 2),
+      ],
+      program.programId,
+    );
+
+    // Prepare accounts for settlement
+    const eventVault = await getOrCreateAssociatedTokenAccount(
+      provider.connection,
+      provider.wallet.payer,
+      usdcMint,
+      eventPDA,
+      true,
+    );
+
+    const now = Math.floor(Date.now() / 1000);
+    const deadline = new anchor.BN(now + 60);
+
+    const vaultBalanceBefore = await provider.connection.getTokenAccountBalance(
+      eventVault.address,
+    );
+
+    const proposalArgs = {
+      title: "Lunch bills at Delhi",
+      amount: new anchor.BN(50 * 10 ** 6),
+      spendings: [
+        { wallet: poolUser.publicKey, percentage: 60 },
+        { wallet: poolUserB.publicKey, percentage: 40 },
+      ],
+      deadline: deadline,
+    };
+
+    // Creator creates new proposal
+    await program.methods
+      .createProposal(
+        proposalArgs.title,
+        proposalArgs.amount,
+        proposalArgs.spendings,
+        proposalArgs.deadline,
+      )
+      .accountsStrict({
+        creator: poolCreator.publicKey,
+        event: eventPDA,
+        mint: usdcMint,
+        proposal: proposalPDA2,
+        associatedTokenProgram,
+        systemProgram,
+        tokenProgram,
+      })
+      .signers([poolCreator])
+      .rpc();
+
+    const proposal2 = await program.account.proposal.fetch(proposalPDA2);
+    assert.equal(proposal2.amount.toNumber(), proposalArgs.amount.toNumber());
+
+    // poolUser votes NO
+    await program.methods
+      .vote(false)
+      .accountsStrict({
+        event: eventPDA,
+        proposal: proposalPDA2,
+        systemProgram,
+        tokenProgram,
+        associatedTokenProgram,
+        mint: usdcMint,
+        voter: poolUser.publicKey,
+      })
+      .signers([poolUser])
+      .rpc();
+
+    // poolUserB votes YES
+    await program.methods
+      .vote(true)
+      .accountsStrict({
+        event: eventPDA,
+        proposal: proposalPDA2,
+        systemProgram,
+        tokenProgram,
+        associatedTokenProgram,
+        mint: usdcMint,
+        voter: poolUserB.publicKey,
+      })
+      .signers([poolUserB])
+      .rpc();
+
+    const participantPDAs = [userParticipantPDA, userBParticipantPDA];
+
+    await program.methods
+      .settleProposal()
+      .accountsStrict({
+        associatedTokenProgram,
+        event: eventPDA,
+        eventVault: eventVault.address,
+        mint: usdcMint,
+        proposal: proposalPDA2,
+        signer: poolCreator.publicKey,
+        systemProgram,
+        tokenProgram,
+        withdrawAccount: poolCreatorUsdcATA.address,
+      })
+      .remainingAccounts(
+        participantPDAs.map((pda) => ({
+          pubkey: pda,
+          isWritable: true,
+          isSigner: false,
+        })),
+      )
+      .signers([poolCreator])
+      .rpc();
+
+    // Check balances after settlement
+    const vaultBalanceAfter = await provider.connection.getTokenAccountBalance(
+      eventVault.address,
+    );
+
+    // Fetch participants to verify spending updates
+    const participantA =
+      await program.account.participant.fetch(userParticipantPDA);
+    const participantB =
+      await program.account.participant.fetch(userBParticipantPDA);
+
+    assert.equal(vaultBalanceBefore.value.uiAmount, vaultBalanceAfter.value.uiAmount);
+
+    const proposal2After = await program.account.proposal.fetch(proposalPDA2);
+    assert.equal(proposal2After.cancelled, true);
   });
 });
