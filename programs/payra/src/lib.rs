@@ -54,9 +54,15 @@ pub mod payra {
         ctx.accounts.vote(vote_choice)
     }
 
-    pub fn settle_proposal(
-        ctx: Context<SettleProposal>
-    ) -> Result<()> {
+    pub fn settle_proposal(ctx: Context<SettleProposal>) -> Result<()> {
         settle_proposal_handler(ctx)
+    }
+
+    pub fn create_settle_proposal(ctx: Context<CreateSettleProposal>, deadline: i64) -> Result<()> {
+        ctx.accounts.create_settle_proposal(deadline, ctx.bumps)
+    }
+    
+    pub fn settle_event(ctx: Context<SettleEvent>) -> Result<()>{ 
+        settle_event_handler(ctx)
     }
 }

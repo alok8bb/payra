@@ -59,7 +59,7 @@ impl<'info> Contribute<'info> {
 
         // check whitelisted address
         require!(
-            self.event.whitelist.contains(&self.contributor.key()),
+            self.event.whitelist.contains(&self.contributor.key()) || self.contributor.key() == self.event.creator,
             PayraError::NotWhitelisted
         );
 
@@ -88,6 +88,7 @@ impl<'info> Contribute<'info> {
                 spent: 0,
                 refunded: false,
                 bump: bumps.participant,
+                net_owed: 0
             });
         } else {
             // account exists, update contributed amount by adding

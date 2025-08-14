@@ -5,6 +5,8 @@ pub mod whitelist;
 pub mod create_proposal;
 pub mod vote;
 pub mod settle_proposal;
+pub mod create_settle_proposal;
+pub mod settle_event;
 
 pub use create_event::*;
 pub use close_event::*;
@@ -13,3 +15,5 @@ pub use whitelist::*;
 pub use create_proposal::*;
 pub use vote::*;
 pub use settle_proposal::*;
+pub use create_settle_proposal::*;
+pub use settle_event::*;

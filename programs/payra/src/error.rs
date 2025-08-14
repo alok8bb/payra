@@ -27,6 +27,8 @@ pub enum PayraError {
     #[msg("withdraw account doesn't match the event's withdarw account")]
     InvalidWithdrawAccount,
     
+    NotApproved,
+    MissingParticipantAccount,
     AlreadySettled,
     TooEarlyToSettle,
     InvalidParticipantEvent,

@@ -4,7 +4,7 @@ use anchor_spl::{
     token::{Mint, Token},
 };
 
-use crate::{error::PayraError, program::Payra, Event, Proposal};
+use crate::{error::PayraError, program::Payra, Event, Proposal, ProposalType};
 
 #[derive(Accounts)]
 pub struct Vote<'info> {
@@ -41,11 +41,13 @@ impl<'info> Vote<'info> {
             PayraError::ProposalExpired
         );
 
-        let allowed = proposal
-            .spendings
-            .iter()
-            .any(|s| s.wallet == self.voter.key());
-        require!(allowed, PayraError::NotAuthorizedToVote);
+        if let ProposalType::Spending = proposal.proposal_type {
+            let allowed = proposal
+                .spendings
+                .iter()
+                .any(|s| s.wallet == self.voter.key());
+            require!(allowed, PayraError::NotAuthorizedToVote);
+        }
 
         let already_voted = proposal
             .yes_votes
