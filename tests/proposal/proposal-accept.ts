@@ -107,14 +107,14 @@ describe("proposal flow", () => {
   );
 
   const [eventPDA] = anchor.web3.PublicKey.findProgramAddressSync(
-    [Buffer.from("event"), new anchor.BN(0).toArrayLike(Buffer, "le", 8)],
+    [Buffer.from("event"), new anchor.BN(2).toArrayLike(Buffer, "le", 8)],
     program.programId
   );
 
   const [userParticipantPDA] = anchor.web3.PublicKey.findProgramAddressSync(
     [
       Buffer.from("participant"),
-      new anchor.BN(0).toArrayLike(Buffer, "le", 8),
+      new anchor.BN(2).toArrayLike(Buffer, "le", 8),
       poolUser.publicKey.toBuffer(),
     ],
     program.programId
@@ -123,7 +123,7 @@ describe("proposal flow", () => {
   const [userBParticipantPDA] = anchor.web3.PublicKey.findProgramAddressSync(
     [
       Buffer.from("participant"),
-      new anchor.BN(0).toArrayLike(Buffer, "le", 8),
+      new anchor.BN(2).toArrayLike(Buffer, "le", 8),
       poolUserB.publicKey.toBuffer(),
     ],
     program.programId
@@ -133,32 +133,32 @@ describe("proposal flow", () => {
     anchor.web3.PublicKey.findProgramAddressSync(
       [
         Buffer.from("participant"),
-        new anchor.BN(0).toArrayLike(Buffer, "le", 8),
+        new anchor.BN(2).toArrayLike(Buffer, "le", 8),
         poolCreator.publicKey.toBuffer(),
       ],
       program.programId
     );
 
-  it("initialize protocol", async () => {
-    try {
-      await program.methods
-        .initialize()
-        .accountsStrict({
-          admin: provider.wallet.publicKey,
-          eventCounter: eventCounterPDA,
-          systemProgram,
-        })
-        .rpc();
+  // it("initialize protocol", async () => {
+  //   try {
+  //     await program.methods
+  //       .initialize()
+  //       .accountsStrict({
+  //         admin: provider.wallet.publicKey,
+  //         eventCounter: eventCounterPDA,
+  //         systemProgram,
+  //       })
+  //       .rpc();
 
-      const counterState = await program.account.eventCounter.fetch(
-        eventCounterPDA
-      );
-    } catch (e) {
-      console.log(e);
-    }
-  });
+  //     const counterState = await program.account.eventCounter.fetch(
+  //       eventCounterPDA
+  //     );
+  //   } catch (e) {
+  //     console.log(e);
+  //   }
+  // });
 
-  it("create event", async () => {
+  it("create event with specific deadline and target", async () => {
     const now = Math.floor(Date.now() / 1000);
     const deadline = new anchor.BN(now + 60); // 1 seconds ahead of now for testing purposes
 
@@ -182,7 +182,7 @@ describe("proposal flow", () => {
     assert.equal(eventAccount.name, eventArgs.name);
   });
 
-  it("whitelist users", async () => {
+  it("whitelists multiple users for event", async () => {
     await program.methods
       .whitelist([poolUser.publicKey])
       .accountsStrict({
@@ -208,7 +208,7 @@ describe("proposal flow", () => {
     );
   });
 
-  it("users contribute 200 each", async () => {
+  it("users contribute specific amounts to event", async () => {
     const eventVault = await getOrCreateAssociatedTokenAccount(
       provider.connection,
       provider.wallet.payer, // fee payer
@@ -271,7 +271,7 @@ describe("proposal flow", () => {
     assert.equal(vaultBalanceAfter.value.uiAmount, 500);
   });
 
-  it("creator creates a proposal", async () => {
+  it("creator creates a proposal with specific details", async () => {
     const now = Math.floor(Date.now() / 1000);
     const deadline = new anchor.BN(now + 60); // 1 seconds ahead of now for testing purposes
     const event = await program.account.event.fetch(eventPDA);
@@ -329,7 +329,7 @@ describe("proposal flow", () => {
     assert.equal(eventAfter.proposalCount, 1);
   });
 
-  it("votes yes to the proposal", async () => {
+  it("votes yes to the proposal by a user", async () => {
     const [proposalPDA] = anchor.web3.PublicKey.findProgramAddressSync(
       [
         Buffer.from("proposal"),
@@ -360,7 +360,7 @@ describe("proposal flow", () => {
     );
   });
 
-  it("fails on voting again", async () => {
+  it("fails on voting again by the same user", async () => {
     const [proposalPDA] = anchor.web3.PublicKey.findProgramAddressSync(
       [
         Buffer.from("proposal"),
@@ -404,7 +404,7 @@ describe("proposal flow", () => {
       .rpc();
   });
 
-  it("settle proposal", async () => {
+  it("settles proposal after voting", async () => {
     const [proposalPDA] = anchor.web3.PublicKey.findProgramAddressSync(
       [
         Buffer.from("proposal"),
@@ -459,7 +459,7 @@ describe("proposal flow", () => {
     assert.equal(participantB.spent.toNumber(), 40 * 10 ** 6);
   });
 
-  it("create second proposal with mixed votes and settle", async () => {
+  it("creates second proposal with mixed votes and settles", async () => {
     const event = await program.account.event.fetch(eventPDA);
 
     const [proposalPDA2] = anchor.web3.PublicKey.findProgramAddressSync(
@@ -597,7 +597,7 @@ describe("proposal flow", () => {
     assert.equal(proposal2After.cancelled, true);
   });
 
-  it("create settle event proposal", async () => {
+  it("creates settle event proposal with deadline", async () => {
     const now = Math.floor(Date.now() / 1000);
     const deadline = new anchor.BN(now + 60); // 1 seconds ahead of now for testing purposes
     const event = await program.account.event.fetch(eventPDA);
@@ -628,7 +628,7 @@ describe("proposal flow", () => {
     assert.equal(proposal.deadline.toNumber(), deadline.toNumber());
   });
 
-  it("pass the settle event proposal", async () => {
+  it("passes the settle event proposal with votes", async () => {
     const [settleProposalPDA] = anchor.web3.PublicKey.findProgramAddressSync(
       [
         Buffer.from("proposal"),
@@ -687,7 +687,7 @@ describe("proposal flow", () => {
     );
   });
 
-  it("settle the event proposal", async () => {
+  it("settles the event proposal after passing", async () => {
     const [settleProposalPDA] = anchor.web3.PublicKey.findProgramAddressSync(
       [
         Buffer.from("proposal"),

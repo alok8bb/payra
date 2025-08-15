@@ -1,6 +1,6 @@
 import * as anchor from "@coral-xyz/anchor";
 import { Program } from "@coral-xyz/anchor";
-import { Payra } from "../target/types/payra";
+import { Payra } from "../../target/types/payra";
 import { LAMPORTS_PER_SOL, PublicKey } from "@solana/web3.js";
 import { assert, expect } from "chai";
 import {
@@ -118,7 +118,7 @@ describe("event management", () => {
     }
   });
 
-  it("creates two events", async () => {
+  it("creates two events with deadlines", async () => {
     const now = Math.floor(Date.now() / 1000);
     const deadline = new anchor.BN(now + 1); // 1 seconds ahead of now for testing purposes
     const deadline2 = new anchor.BN(now + 4);
@@ -160,7 +160,7 @@ describe("event management", () => {
     assert.equal(event2Account.name, event2Args.name);
   });
 
-  it("fails to close on deadline not reached", async () => {
+  it("fails to close event when deadline not reached", async () => {
     try {
       await program.methods
         .closeEvent()
@@ -178,7 +178,7 @@ describe("event management", () => {
     }
   });
 
-  it("closes after deadline reached but target not reached", async () => {
+  it("closes event after deadline but target not reached", async () => {
     // wait for deadline to finish
     await sleep(1400);
 
@@ -195,7 +195,7 @@ describe("event management", () => {
       .rpc();
   });
 
-  it("whitelist user wallet", async () => {
+  it("whitelists user wallet for event", async () => {
     await program.methods
       .whitelist([poolUser.publicKey])
       .accountsStrict({
@@ -212,7 +212,7 @@ describe("event management", () => {
     );
   });
 
-  it("contributes 100 usdc to event", async () => {
+  it("contributes 100 USDC to event", async () => {
     const event2Vault = await getOrCreateAssociatedTokenAccount(
       provider.connection,
       provider.wallet.payer, // fee payer
@@ -269,7 +269,7 @@ describe("event management", () => {
     assert.equal(participantAccount.contributed.toNumber(), 100 * 10 ** 6);
   });
 
-  it("fails to close after deadline reached but target achieved", async () => {
+  it("fails to close event after deadline when target achieved", async () => {
     // wait for deadline to finish
     await sleep(3000);
 
