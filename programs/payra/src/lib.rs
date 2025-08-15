@@ -13,7 +13,7 @@ pub use constants::*;
 pub use instructions::*;
 pub use state::*;
 
-declare_id!("DCqLDvTufZiwAfK3RPeThTTdXDJBsrLxMuxyvDCqaZAR");
+declare_id!("pAYrAkZHxebd89ojqt8pu9fBF8HWfiAcdqs8QFzk6dt");
 
 #[program]
 pub mod payra {

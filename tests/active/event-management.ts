@@ -1,7 +1,7 @@
 import * as anchor from "@coral-xyz/anchor";
 import { Program } from "@coral-xyz/anchor";
 import { Payra } from "../../target/types/payra";
-import { LAMPORTS_PER_SOL, PublicKey } from "@solana/web3.js";
+import { LAMPORTS_PER_SOL, PublicKey, SystemProgram, Transaction } from "@solana/web3.js";
 import { assert, expect } from "chai";
 import {
   Account,
@@ -14,7 +14,24 @@ describe("event management", () => {
   const provider = anchor.AnchorProvider.env();
   // helpers
   async function airdropBalance(wallet: PublicKey) {
-    await provider.connection.requestAirdrop(wallet, 2 * LAMPORTS_PER_SOL);
+    const cluster = provider.connection.rpcEndpoint;
+    const isDevnet = cluster.includes('devnet');
+    
+    if (isDevnet) {
+      // Transfer SOL from payer to wallet on devnet
+      const transferAmount = LAMPORTS_PER_SOL / 4;
+      const transferInstruction = SystemProgram.transfer({
+        fromPubkey: provider.wallet.payer.publicKey,
+        toPubkey: wallet,
+        lamports: transferAmount,
+      });
+      
+      const transaction = new Transaction().add(transferInstruction);
+      await provider.sendAndConfirm(transaction);
+    } else {
+      // Use airdrop for localnet
+      await provider.connection.requestAirdrop(wallet, 2 * LAMPORTS_PER_SOL);
+    }
   }
 
   function sleep(ms: number) {
